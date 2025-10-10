@@ -1,7 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { AuthUser } from "@/lib/authTypes";
 
@@ -17,48 +16,37 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
+    // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return;
-      setUser((session?.user as AuthUser) ?? null);
+      setUser(session?.user as AuthUser || null);
       setLoading(false);
     });
 
+    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted) return;
-      setUser((session?.user as AuthUser) ?? null);
-      setLoading(false);
+      setUser(session?.user as AuthUser || null);
     });
 
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleSignOut = async () => {
+  const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
   };
 
-  const value = useMemo(
-    () => ({
-      user,
-      loading,
-      signOut: handleSignOut,
-    }),
-    [user, loading]
+  return (
+    <AuthContext.Provider value={{ user, loading, signOut }}>
+      {children}
+    </AuthContext.Provider>
   );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

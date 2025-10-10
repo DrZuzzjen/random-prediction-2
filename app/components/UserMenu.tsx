@@ -24,14 +24,13 @@ export default function UserMenu() {
 
   const handleSignOut = async () => {
     await signOut();
-    setIsOpen(false);
     router.push("/login");
   };
 
   return (
     <div style={{ position: "relative" }}>
       <button
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => setIsOpen(!isOpen)}
         className="secondary-button"
         style={{ display: "flex", alignItems: "center", gap: 8 }}
       >
