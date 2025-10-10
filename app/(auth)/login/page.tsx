@@ -1,30 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import LoginForm from "@/app/components/AuthForms/LoginForm";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import LoginForm from "@/app/components/AuthForms/LoginForm";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      const redirect = searchParams?.get("redirect") || "/game";
-      router.push(redirect);
+      // Redirect to game
+      router.push("/game");
     } catch (error) {
       setIsLoading(false);
       throw error;

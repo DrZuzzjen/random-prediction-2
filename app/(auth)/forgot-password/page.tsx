@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function ForgotPasswordPage() {
@@ -10,19 +9,17 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (resetError) {
-        throw resetError;
-      }
+      if (error) throw error;
 
       setSent(true);
     } catch (err) {
@@ -56,7 +53,9 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        {error && <div style={{ color: "rgba(248, 113, 113, 0.9)" }}>{error}</div>}
+        {error && (
+          <div style={{ color: "rgba(248, 113, 113, 0.9)" }}>{error}</div>
+        )}
 
         <label style={{ display: "grid", gap: 6 }}>
           <span>Email</span>
@@ -65,7 +64,7 @@ export default function ForgotPasswordPage() {
             required
             placeholder="you@example.com"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
           />
         </label>

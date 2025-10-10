@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import RegisterForm from "@/app/components/AuthForms/RegisterForm";
 import { supabase } from "@/lib/supabaseClient";
+import RegisterForm from "@/app/components/AuthForms/RegisterForm";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,21 +14,20 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name,
+            name,  // Store name in user metadata
           },
           emailRedirectTo: `${window.location.origin}/game`,
         },
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
+      // Show email confirmation message
       setCheckEmail(true);
     } catch (error) {
       setIsLoading(false);
