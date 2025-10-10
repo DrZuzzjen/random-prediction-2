@@ -1,6 +1,7 @@
 export type GameRun = {
   id: string;
   created_at: string;
+  user_id: string | null;  // NEW: nullable during migration
   user_name: string;
   email: string;
   predictions: number[];
@@ -11,6 +12,7 @@ export type GameRun = {
 
 export type LeaderboardEntry = {
   id: string;
+  user_id: string | null;  // NEW: nullable during migration
   name: string;
   email: string;
   best_score: number;
