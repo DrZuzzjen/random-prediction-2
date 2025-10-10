@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import StatCard from "@/app/components/StatCard";
 import Sparkline from "@/app/components/Sparkline";
-import { useSavedIdentity } from "@/app/hooks/useSavedIdentity";
+import { useAuth } from "@/app/components/AuthProvider";
 import { toDisplayList } from "@/lib/utils/game";
 import type { GameRun } from "@/lib/types";
 

@@ -1,0 +1,127 @@
+"use client";
+
+import { useState } from "react";
+import type { FormEvent } from "react";
+
+type RegisterFormProps = {
+  onSubmit: (email: string, password: string, name: string) => Promise<void>;
+  isLoading: boolean;
+};
+
+export default function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      await onSubmit(email, password, name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
+      <div>
+        <h2 style={{ margin: 0, marginBottom: 8 }}>Create your account</h2>
+        <p style={{ margin: 0, color: "rgba(148, 163, 184, 0.85)" }}>
+          Start tracking your predictions and compete on the leaderboard
+        </p>
+      </div>
+
+      {error && (
+        <div
+          style={{
+            padding: "12px 16px",
+            borderRadius: "12px",
+            border: "1px solid rgba(248, 113, 113, 0.5)",
+            background: "rgba(248, 113, 113, 0.1)",
+            color: "rgba(248, 113, 113, 0.9)",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <span>Name</span>
+        <input
+          type="text"
+          required
+          maxLength={50}
+          autoComplete="name"
+          placeholder="Your name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          disabled={isLoading}
+        />
+      </label>
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <span>Email</span>
+        <input
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          disabled={isLoading}
+        />
+      </label>
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <span>Password</span>
+        <input
+          type="password"
+          required
+          autoComplete="new-password"
+          placeholder="At least 6 characters"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          disabled={isLoading}
+        />
+      </label>
+
+      <label style={{ display: "grid", gap: 6 }}>
+        <span>Confirm password</span>
+        <input
+          type="password"
+          required
+          autoComplete="new-password"
+          placeholder="Re-enter password"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          disabled={isLoading}
+        />
+      </label>
+
+      <button type="submit" className="primary-button" disabled={isLoading}>
+        {isLoading ? "Creating account..." : "Create account"}
+      </button>
+
+      <div style={{ textAlign: "center", fontSize: "0.9rem" }}>
+        Already have an account?{" "}
+        <a href="/login" style={{ color: "rgba(56, 189, 248, 0.9)" }}>
+          Log in
+        </a>
+      </div>
+    </form>
+  );
+}
