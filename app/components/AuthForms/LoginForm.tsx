@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
 type LoginFormProps = {
   onSubmit: (email: string, password: string) => Promise<void>;
@@ -13,8 +13,8 @@ export default function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
 
     try {
@@ -55,7 +55,7 @@ export default function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
           autoComplete="email"
           placeholder="you@example.com"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           disabled={isLoading}
         />
       </label>
@@ -68,12 +68,16 @@ export default function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
           autoComplete="current-password"
           placeholder="••••••••"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           disabled={isLoading}
         />
       </label>
 
-      <button type="submit" className="primary-button" disabled={isLoading}>
+      <button
+        type="submit"
+        className="primary-button"
+        disabled={isLoading}
+      >
         {isLoading ? "Logging in..." : "Log in"}
       </button>
 
