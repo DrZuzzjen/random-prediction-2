@@ -9,22 +9,21 @@ export default function MigrationBanner() {
   const [loading, setLoading] = useState(false);
   const [gameCount, setGameCount] = useState<number | null>(null);
 
-  if (!user || migrated) {
-    return null;
-  }
+  if (!user || migrated) return null;
 
   const handleMigrate = async () => {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/migrate-account", { method: "POST" });
+      const response = await fetch("/api/auth/migrate-account", {
+        method: "POST",
+      });
+
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Migration failed");
-      }
+      if (!response.ok) throw new Error(data.error);
 
-      setGameCount(data.migratedGames ?? 0);
+      setGameCount(data.migratedGames);
       setMigrated(true);
     } catch (error) {
       console.error("Migration failed:", error);
