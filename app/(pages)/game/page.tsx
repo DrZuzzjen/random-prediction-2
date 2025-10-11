@@ -146,39 +146,23 @@ export default function GamePage() {
     }
   };
 
-  const getDisplayName = () => {
-    const metadataName =
-      typeof user?.user_metadata?.name === "string" ? user.user_metadata.name.trim() : "";
-    if (metadataName) {
-      return metadataName;
-    }
-    if (typeof user?.email === "string") {
-      const [localPart] = user.email.split("@");
-      return localPart || "Player";
-    }
-    return "Player";
-  };
+  
 
   const persistGameRun = async () => {
-    if (!user) {
-      setStatusMessage({ tone: "error", text: "You need to be logged in to save your game." });
-      return;
-    }
+  setIsSaving(true);
+  setStatusMessage(null);
 
-    setIsSaving(true);
-    setStatusMessage(null);
-
-    try {
-      const response = await fetch("/api/game-run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: getDisplayName(),
-          predictions: selectedNumbers,
-          randomNumbers,
-          score,
-        })
-      });
+  try {
+    const response = await fetch("/api/game-run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player',
+        predictions: selectedNumbers,
+        randomNumbers,
+        score
+      })
+    });
 
       const payload = (await response.json()) as {
         success?: boolean;
@@ -319,7 +303,6 @@ export default function GamePage() {
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <button
                     className="primary-button"
-                    type="button"
                     onClick={persistGameRun}
                     disabled={isSaving}
                   >
