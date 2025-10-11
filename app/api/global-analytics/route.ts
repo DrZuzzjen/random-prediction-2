@@ -14,7 +14,7 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from("game_runs")
-      .select("id, created_at, user_name, email, predictions, random_numbers, score, game_type")
+      .select("id, created_at, user_id, user_name, email, predictions, random_numbers, score, game_type")
       .eq("game_type", "1-99_range_10_numbers")
       .order("created_at", { ascending: false });
 
