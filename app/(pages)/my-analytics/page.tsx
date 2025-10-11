@@ -101,7 +101,73 @@ export default function MyAnalyticsPage() {
         )}
 
         {stats && (
-          // ... rest of analytics display stays the same
+          <div style={{ display: "grid", gap: 24 }}>
+            <div className="grid four">
+              <StatCard label="Games played" value={stats.totalGames.toString()} hint={`Since ${stats.firstGame ? new Date(stats.firstGame).toLocaleDateString() : "—"}`} accent="blue" />
+              <StatCard label="Best score" value={`${stats.bestScore}/10`} hint={`Latest ${stats.latestScore}/10`} accent="green" />
+              <StatCard label="Average score" value={`${stats.avgScore.toFixed(1)}/10`} hint={`${stats.gamesLastWeek} games this week`} accent="amber" />
+              <StatCard label="Login coming soon" value="Stay tuned" hint="All stats will be tied to your account" accent="purple" />
+            </div>
+
+            <div className="card" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <h3 style={{ margin: 0 }}>Recent performance</h3>
+              <Sparkline data={stats.scoreTrend} max={trendMax} min={0} />
+              <p style={{ margin: 0, color: "rgba(148, 163, 184, 0.75)" }}>
+                Showing your last {stats.scoreTrend.length} games. Each dot is a run, zero means no matches.
+              </p>
+            </div>
+
+            <div className="card" style={{ display: "grid", gap: 16 }}>
+              <h3 style={{ margin: 0 }}>Your favourite numbers</h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                {stats.favoriteNumbers.length === 0 && (
+                  <span style={{ color: "rgba(148, 163, 184, 0.75)" }}>
+                    Start saving runs to discover personal patterns.
+                  </span>
+                )}
+                {stats.favoriteNumbers.map((item) => (
+                  <div
+                    key={item.number}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 16,
+                      background: "rgba(37, 99, 235, 0.18)",
+                      border: "1px solid rgba(148, 163, 184, 0.24)",
+                      minWidth: 72,
+                      textAlign: "center"
+                    }}
+                  >
+                    <div style={{ fontSize: "1.25rem", fontWeight: 700 }}>{item.number.toString().padStart(2, "0")}</div>
+                    <div style={{ fontSize: "0.75rem", color: "rgba(148, 163, 184, 0.75)" }}>{item.count} picks</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card" style={{ display: "grid", gap: 16 }}>
+              <h3 style={{ margin: 0 }}>Recent game history</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Score</th>
+                    <th>Your picks</th>
+                    <th>Random numbers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {runs.slice(0, 10).map((run) => (
+                    <tr key={run.id}>
+                      <td>{new Date(run.created_at).toLocaleString()}</td>
+                      <td>{run.score}/10</td>
+                      <td>{toDisplayList(run.predictions)}</td>
+                      <td>{toDisplayList(run.random_numbers)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </section>
     </main>
