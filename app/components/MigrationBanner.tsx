@@ -11,29 +11,31 @@ export default function MigrationBanner() {
   const [shouldShow, setShouldShow] = useState(true);
 
   useEffect(() => {
-    // Check if there are actually legacy games to migrate
-    const checkLegacyGames = async () => {
+    // Check migration status for the authenticated user
+    const checkMigrationStatus = async () => {
       if (!user?.email) return;
 
       try {
-        const response = await fetch('/api/auth/check-legacy-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user.email }),
-        });
+        const response = await fetch('/api/auth/migration-status');
 
         if (response.ok) {
           const data = await response.json();
-          if (!data.hasLegacyData || data.gameCount === 0) {
+          // Only show banner if user has legacy games that need migration
+          if (!data.needsMigration) {
             setShouldShow(false);
           }
+        } else if (response.status === 401) {
+          // User not authenticated, hide banner
+          setShouldShow(false);
         }
       } catch (error) {
-        console.error('Failed to check legacy games', error);
+        console.error('Failed to check migration status', error);
+        // If we can't check, don't show the banner to avoid confusion
+        setShouldShow(false);
       }
     };
 
-    checkLegacyGames();
+    checkMigrationStatus();
   }, [user?.email]);
 
   if (!user || migrated || !shouldShow) return null;

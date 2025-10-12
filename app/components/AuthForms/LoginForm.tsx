@@ -1,26 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 type LoginFormProps = {
-  onSubmit: (email: string, password: string) => Promise<void>;
-  isLoading: boolean;
+  loginAction: (formData: FormData) => Promise<{ error?: string } | void>;
 };
 
-export default function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function LoginForm({ loginAction }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
 
     try {
-      await onSubmit(email, password);
+      const result = await loginAction(formData);
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+      }
+      // Success case: server action will redirect
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
+      setIsLoading(false);
     }
   };
 
@@ -51,11 +57,10 @@ export default function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
         <span>Email</span>
         <input
           type="email"
+          name="email"
           required
           autoComplete="email"
           placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
           disabled={isLoading}
         />
       </label>
@@ -64,11 +69,10 @@ export default function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
         <span>Password</span>
         <input
           type="password"
+          name="password"
           required
           autoComplete="current-password"
           placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
           disabled={isLoading}
         />
       </label>
