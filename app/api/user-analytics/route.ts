@@ -10,7 +10,7 @@ export async function GET() {
 
     const { data, error } = await supabaseAdmin
       .from("game_runs")
-      .select("id, created_at, user_name, email, predictions, random_numbers, score, game_type")
+      .select("id, created_at, user_id, user_name, email, predictions, random_numbers, score, game_type")
       .or(
         normalisedEmail
           ? `user_id.eq.${user.id},and(email.eq.${normalisedEmail},user_id.is.null)`

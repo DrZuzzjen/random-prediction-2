@@ -5,14 +5,21 @@ import { useState } from "react";
 type RegisterFormProps = {
   onSubmit: (email: string, password: string, name: string) => Promise<void>;
   isLoading: boolean;
+  onLegacyDataDetected?: (legacyData: any) => void;
 };
 
-export default function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
+export default function RegisterForm({ onSubmit, isLoading, onLegacyDataDetected }: RegisterFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [legacyData, setLegacyData] = useState<{
+    hasLegacyData: boolean;
+    gameCount: number;
+    leaderboardEntry: any;
+  } | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +39,31 @@ export default function RegisterForm({ onSubmit, isLoading }: RegisterFormProps)
       await onSubmit(email, password, name);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
+    }
+  };
+
+  const checkLegacyEmail = async (emailToCheck: string) => {
+    if (!emailToCheck || !emailToCheck.includes('@')) return;
+
+    setCheckingEmail(true);
+    try {
+      const response = await fetch('/api/auth/check-legacy-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToCheck }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLegacyData(data);
+        if (onLegacyDataDetected) {
+          onLegacyDataDetected(data);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check legacy email', error);
+    } finally {
+      setCheckingEmail(false);
     }
   };
 
@@ -58,6 +90,21 @@ export default function RegisterForm({ onSubmit, isLoading }: RegisterFormProps)
         </div>
       )}
 
+      {legacyData?.hasLegacyData && (
+        <div
+          style={{
+            padding: "12px 16px",
+            borderRadius: "12px",
+            border: "1px solid rgba(16, 185, 129, 0.5)",
+            background: "rgba(16, 185, 129, 0.1)",
+            color: "rgba(16, 185, 129, 0.9)",
+          }}
+        >
+          <strong>🎉 Welcome back!</strong> We found {legacyData.gameCount} previous game{legacyData.gameCount !== 1 ? 's' : ''} with this email.
+          They'll be automatically linked to your new account!
+        </div>
+      )}
+
       <label style={{ display: "grid", gap: 6 }}>
         <span>Name</span>
         <input
@@ -81,6 +128,7 @@ export default function RegisterForm({ onSubmit, isLoading }: RegisterFormProps)
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onBlur={(e) => checkLegacyEmail(e.target.value)}
           disabled={isLoading}
         />
       </label>

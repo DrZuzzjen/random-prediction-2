@@ -9,6 +9,11 @@ export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [legacyData, setLegacyData] = useState<{
+    hasLegacyData: boolean;
+    gameCount: number;
+    leaderboardEntry: any;
+  } | null>(null);
 
   const handleRegister = async (email: string, password: string, name: string) => {
     setIsLoading(true);
@@ -26,6 +31,18 @@ export default function RegisterPage() {
       });
 
       if (error) throw error;
+
+      // Auto-migrate legacy games if any exist
+      if (legacyData?.hasLegacyData && data.user) {
+        try {
+          await fetch("/api/auth/migrate-account", {
+            method: "POST",
+          });
+        } catch (migrationError) {
+          console.error("Auto-migration failed (non-critical):", migrationError);
+          // Don't block the signup flow, just log the error
+        }
+      }
 
       // Show email confirmation message
       setCheckEmail(true);
@@ -53,7 +70,11 @@ export default function RegisterPage() {
 
   return (
     <div className="card" style={{ padding: 32 }}>
-      <RegisterForm onSubmit={handleRegister} isLoading={isLoading} />
+      <RegisterForm 
+        onSubmit={handleRegister} 
+        isLoading={isLoading} 
+        onLegacyDataDetected={setLegacyData}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "./AuthProvider";
 
 export default function MigrationBanner() {
@@ -8,8 +8,35 @@ export default function MigrationBanner() {
   const [migrated, setMigrated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [gameCount, setGameCount] = useState<number | null>(null);
+  const [shouldShow, setShouldShow] = useState(true);
 
-  if (!user || migrated) return null;
+  useEffect(() => {
+    // Check if there are actually legacy games to migrate
+    const checkLegacyGames = async () => {
+      if (!user?.email) return;
+
+      try {
+        const response = await fetch('/api/auth/check-legacy-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: user.email }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (!data.hasLegacyData || data.gameCount === 0) {
+            setShouldShow(false);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check legacy games', error);
+      }
+    };
+
+    checkLegacyGames();
+  }, [user?.email]);
+
+  if (!user || migrated || !shouldShow) return null;
 
   const handleMigrate = async () => {
     setLoading(true);
