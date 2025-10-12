@@ -26,23 +26,11 @@ export default function RegisterPage() {
           data: {
             name,  // Store name in user metadata
           },
-          emailRedirectTo: `${window.location.origin}/game`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) throw error;
-
-      // Auto-migrate legacy games if any exist
-      if (legacyData?.hasLegacyData && data.user) {
-        try {
-          await fetch("/api/auth/migrate-account", {
-            method: "POST",
-          });
-        } catch (migrationError) {
-          console.error("Auto-migration failed (non-critical):", migrationError);
-          // Don't block the signup flow, just log the error
-        }
-      }
 
       // Show email confirmation message
       setCheckEmail(true);
