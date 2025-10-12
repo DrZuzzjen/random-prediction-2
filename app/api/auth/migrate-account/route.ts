@@ -4,7 +4,16 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST() {
   try {
-    const user = await requireAuth();
+    // Try to get the authenticated user with better error handling
+    let user;
+    try {
+      user = await requireAuth();
+    } catch (authError) {
+      console.error("Auth error in migration:", authError);
+      return NextResponse.json({ 
+        error: "User not authenticated yet. Please try again in a moment." 
+      }, { status: 401 });
+    }
 
     if (!user.email) {
       return NextResponse.json({ error: "Authenticated user is missing an email address" }, { status: 400 });

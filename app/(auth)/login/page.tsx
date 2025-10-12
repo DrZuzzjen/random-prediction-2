@@ -20,8 +20,8 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      // Redirect to game
-      router.push("/game");
+      // Simple redirect - let MigrationBanner handle migration after auth
+      window.location.href = "/game";
     } catch (error) {
       setIsLoading(false);
       throw error;

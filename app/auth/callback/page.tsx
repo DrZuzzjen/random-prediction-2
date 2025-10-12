@@ -12,7 +12,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Handle the auth callback from Supabase
+        // Handle the auth callback from Supabase (both signup and login)
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -23,6 +23,16 @@ export default function AuthCallbackPage() {
 
         const user = data.session?.user;
         if (!user?.email) {
+          // Try to handle URL hash params for auth tokens
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          if (hashParams.get('access_token')) {
+            // Wait a bit for Supabase to process the tokens
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+            return;
+          }
+          
           router.push("/login");
           return;
         }
@@ -41,21 +51,39 @@ export default function AuthCallbackPage() {
             const legacyData = await checkResponse.json();
             
             if (legacyData.hasLegacyData && legacyData.gameCount > 0) {
-              // User has legacy games - migrate them
-              const migrateResponse = await fetch("/api/auth/migrate-account", {
-                method: "POST",
-              });
+              // User has legacy games - migrate them with retry logic
+              let migrationSuccess = false;
+              let retries = 3;
+              
+              for (let i = 0; i < retries && !migrationSuccess; i++) {
+                try {
+                  const migrateResponse = await fetch("/api/auth/migrate-account", {
+                    method: "POST",
+                  });
 
-              if (migrateResponse.ok) {
-                const migrateData = await migrateResponse.json();
-                setMigratedGames(migrateData.migratedGames || legacyData.gameCount);
-                setStatus("success");
-                
-                // Redirect to game after showing success message
-                setTimeout(() => {
-                  router.push("/game");
-                }, 3000);
-                return;
+                  if (migrateResponse.ok) {
+                    const migrateData = await migrateResponse.json();
+                    setMigratedGames(migrateData.migratedGames || legacyData.gameCount);
+                    setStatus("success");
+                    migrationSuccess = true;
+                    
+                    // Redirect to game after showing success message
+                    setTimeout(() => {
+                      window.location.href = "/game";
+                    }, 3000);
+                    return;
+                  } else if (migrateResponse.status === 401 && i < retries - 1) {
+                    // Still not authenticated, wait and retry
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                  } else {
+                    throw new Error(`Migration failed: ${migrateResponse.status}`);
+                  }
+                } catch (retryError) {
+                  if (i === retries - 1) {
+                    throw retryError;
+                  }
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
               }
             }
           }
@@ -65,7 +93,7 @@ export default function AuthCallbackPage() {
         }
 
         // No legacy games or migration failed - go straight to game
-        router.push("/game");
+        window.location.href = "/game";
         
       } catch (error) {
         console.error("Callback handling failed:", error);
