@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import StatCard from "@/app/components/StatCard";
 import Sparkline from "@/app/components/Sparkline";
-import { useSavedIdentity } from "@/app/hooks/useSavedIdentity";
+import { useAuth } from "@/app/components/AuthProvider";
 import { toDisplayList } from "@/lib/utils/game";
 import type { GameRun } from "@/lib/types";
 
@@ -25,38 +25,32 @@ type UserAnalyticsResponse = {
 };
 
 export default function MyAnalyticsPage() {
-  const identity = useSavedIdentity();
-  const [emailInput, setEmailInput] = useState(identity.email);
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<UserAnalyticsResponse | null>(null);
 
   useEffect(() => {
-    if (identity.email && !emailInput) {
-      setEmailInput(identity.email);
+    if (!authLoading && user) {
+      loadAnalytics();
     }
-  }, [identity.email, emailInput]);
+  }, [authLoading, user]);
 
-  const loadAnalytics = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!emailInput.trim()) {
-      setError("Enter an email to continue");
-      return;
-    }
-
+  const loadAnalytics = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/user-analytics?email=${encodeURIComponent(emailInput.trim())}`, {
+      const response = await fetch('/api/user-analytics', {
         cache: "no-store"
       });
-      const payload = (await response.json()) as UserAnalyticsResponse;
+      const payload = await response.json() as UserAnalyticsResponse;
+
       if (!response.ok) {
         throw new Error(payload.error || "Unable to load analytics");
       }
+
       setData(payload);
-      identity.persist(identity.name, emailInput.trim());
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -71,6 +65,18 @@ export default function MyAnalyticsPage() {
 
   const trendMax = useMemo(() => (stats ? Math.max(...stats.scoreTrend, 10) : 10), [stats]);
 
+  if (authLoading || loading) {
+    return (
+      <main>
+        <section className="container" style={{ padding: "48px 0" }}>
+          <div className="card" style={{ textAlign: "center", padding: 48 }}>
+            Loading your analytics...
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main>
       <section className="container" style={{ padding: "48px 0", display: "grid", gap: 24 }}>
@@ -78,47 +84,19 @@ export default function MyAnalyticsPage() {
           <div className="tag">👤 Personal analytics</div>
           <h1 style={{ margin: 0 }}>Track your intuition over time</h1>
           <p style={{ margin: 0, color: "rgba(148, 163, 184, 0.85)", maxWidth: 720 }}>
-            We will bring a full login experience next. For now, use the same email you share after each game to
-            unlock your personal history. Everything is securely stored in Supabase.
+            All your game history and stats, securely stored in Supabase and linked to your account.
           </p>
         </header>
 
-        <form onSubmit={loadAnalytics} className="card" style={{ display: "grid", gap: 16, padding: 24 }}>
-          <label style={{ display: "grid", gap: 6 }}>
-            <span>Email</span>
-            <input
-              type="email"
-              required
-              placeholder="you@example.com"
-              value={emailInput}
-              onChange={(event) => setEmailInput(event.target.value)}
-            />
-          </label>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button className="primary-button" type="submit" disabled={loading}>
-              {loading ? "Loading analytics…" : "Load my stats"}
-            </button>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => {
-                setEmailInput(identity.email);
-                setData(null);
-                setError(null);
-              }}
-              disabled={loading}
-            >
-              Reset
-            </button>
+        {error && (
+          <div className="card" style={{ padding: 24, color: "rgba(248, 113, 113, 0.9)" }}>
+            {error}
           </div>
-          {error && (
-            <div style={{ color: "rgba(248, 113, 113, 0.9)" }}>{error}</div>
-          )}
-        </form>
+        )}
 
         {!stats && !loading && data && (
           <div className="card" style={{ padding: 24, color: "rgba(148, 163, 184, 0.85)" }}>
-            No games found for this email yet. Play a round and share the same email to start tracking progress.
+            No games found yet. Play a round to start tracking your progress!
           </div>
         )}
 

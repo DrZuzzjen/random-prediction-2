@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import NumberDial from "@/app/components/NumberDial";
 import SelectedNumbers from "@/app/components/SelectedNumbers";
 import LeaderboardPanel from "@/app/components/LeaderboardPanel";
-import { useSavedIdentity } from "@/app/hooks/useSavedIdentity";
+import MigrationBanner from "@/app/components/MigrationBanner";
+import { useAuth } from "@/app/components/AuthProvider";
 import {
   calculateMatches,
   calculateScore,
@@ -35,7 +36,7 @@ const MAX_SELECTION = 10;
 
 export default function GamePage() {
   const router = useRouter();
-  const identity = useSavedIdentity();
+  const { user } = useAuth();
 
   const [phase, setPhase] = useState<Phase>("select");
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -130,7 +131,10 @@ export default function GamePage() {
       const computedScore = calculateScore(selectedNumbers, payload.numbers);
       setScore(computedScore);
       setPhase("details");
-      setStatusMessage({ tone: "info", text: "Numbers are ready! Tell us who played to reveal the results." });
+      setStatusMessage({
+        tone: "info",
+        text: "Numbers are ready! Save this run to your account to reveal the results.",
+      });
     } catch (error) {
       console.error(error);
       setStatusMessage({
@@ -142,29 +146,23 @@ export default function GamePage() {
     }
   };
 
-  const persistGameRun = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  
 
-    if (!identity.name.trim() || !identity.email.trim()) {
-      setStatusMessage({ tone: "error", text: "Please provide both your name and email." });
-      return;
-    }
+  const persistGameRun = async () => {
+  setIsSaving(true);
+  setStatusMessage(null);
 
-    setIsSaving(true);
-    setStatusMessage(null);
-
-    try {
-      const response = await fetch("/api/game-run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: identity.name.trim(),
-          email: identity.email.trim(),
-          predictions: selectedNumbers,
-          randomNumbers,
-          score
-        })
-      });
+  try {
+    const response = await fetch("/api/game-run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player',
+        predictions: selectedNumbers,
+        randomNumbers,
+        score
+      })
+    });
 
       const payload = (await response.json()) as {
         success?: boolean;
@@ -180,7 +178,6 @@ export default function GamePage() {
       setNewHighScore(highScore);
       setPhase("results");
       setStatusMessage({ tone: "success", text: highScore ? "New high score!" : "Run saved." });
-      identity.persist(identity.name.trim(), identity.email.trim());
 
       // Refresh leaderboard quietly
       try {
@@ -212,6 +209,7 @@ export default function GamePage() {
   return (
     <main>
       <section className="container" style={{ padding: "48px 0", display: "grid", gap: "28px" }}>
+        <MigrationBanner />
         <header className="card" style={{ display: "grid", gap: "16px" }}>
           <div className="phase-tag">🎯 Random Prediction Experience</div>
           <h1 className="hero-title">
@@ -223,7 +221,7 @@ export default function GamePage() {
             human intuition fares against true randomness.
           </p>
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-            <div className="tag">🔐 Login upgrade coming soon</div>
+            <div className="tag">🔐 Secured with Supabase Auth</div>
             <div className="tag">🧠 Analytics powered by Supabase</div>
           </div>
         </header>
@@ -296,49 +294,29 @@ export default function GamePage() {
                 <div className="card" style={{ background: "rgba(30, 41, 59, 0.6)", border: "1px dashed rgba(148, 163, 184, 0.4)" }}>
                   <h3 style={{ marginTop: 0 }}>We have the results ready!</h3>
                   <p style={{ color: "rgba(148, 163, 184, 0.85)" }}>
-                    Share who played so we can track your progress over time. Your score will update the
-                    leaderboard and unlock personal analytics once the identity system rolls out.
+                    Your results are being saved to your account. Click below to reveal your score!
                   </p>
                   <p style={{ color: "rgba(148, 163, 184, 0.75)" }}>
                     Selected numbers: <strong>{toDisplayList(selectedNumbers)}</strong>
                   </p>
                 </div>
-                <form onSubmit={persistGameRun} style={{ display: "grid", gap: 16 }}>
-                  <label style={{ display: "grid", gap: 6 }}>
-                    <span>Name</span>
-                    <input
-                      type="text"
-                      required
-                      maxLength={50}
-                      placeholder="Your name"
-                      value={identity.name}
-                      onChange={(event) => identity.setName(event.target.value)}
-                    />
-                  </label>
-                  <label style={{ display: "grid", gap: 6 }}>
-                    <span>Email</span>
-                    <input
-                      type="email"
-                      required
-                      placeholder="you@example.com"
-                      value={identity.email}
-                      onChange={(event) => identity.setEmail(event.target.value)}
-                    />
-                  </label>
-                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                    <button className="primary-button" type="submit" disabled={isSaving}>
-                      {isSaving ? "Saving to Supabase..." : "Reveal my results"}
-                    </button>
-                    <button
-                      className="secondary-button"
-                      type="button"
-                      onClick={resetGame}
-                      disabled={isSaving}
-                    >
-                      Start over
-                    </button>
-                  </div>
-                </form>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <button
+                    className="primary-button"
+                    onClick={persistGameRun}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Saving to Supabase..." : "Reveal my results"}
+                  </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={resetGame}
+                    disabled={isSaving}
+                  >
+                    Start over
+                  </button>
+                </div>
               </div>
             )}
 
