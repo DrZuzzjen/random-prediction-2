@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -71,15 +72,22 @@ export default function NumberDial({
   disabled,
   highlightNumbers = []
 }: NumberDialProps) {
-  const initialNumber = Math.floor(Math.random() * TOTAL_NUMBERS) + 1;
-  const initialRotation = -numberToAngle(initialNumber);
-
-  const [currentNumber, setCurrentNumber] = useState<number>(initialNumber);
-  const [rotation, setRotation] = useState<number>(initialRotation);
+  // Initialize with a fixed value to prevent hydration mismatch
+  const [currentNumber, setCurrentNumber] = useState<number>(1);
+  const [rotation, setRotation] = useState<number>(-numberToAngle(1));
   const [isDragging, setIsDragging] = useState(false);
 
+  // Set random initial value on client side only
+  useEffect(() => {
+    const randomNumber = Math.floor(Math.random() * TOTAL_NUMBERS) + 1;
+    const randomRotation = -numberToAngle(randomNumber);
+    setCurrentNumber(randomNumber);
+    setRotation(randomRotation);
+    rotationRef.current = randomRotation;
+  }, []);
+
   const dialFaceRef = useRef<HTMLDivElement>(null);
-  const rotationRef = useRef<number>(initialRotation);
+  const rotationRef = useRef<number>(-numberToAngle(1));
   const dragRef = useRef<DragState>({ active: false, pointerId: null, previousAngle: 0 });
 
   const ticks = useMemo(() => Array.from({ length: TOTAL_NUMBERS }, (_, index) => index), []);
