@@ -388,6 +388,7 @@ textarea:focus {
 
 .safe-dial-slider input[type="range"] {
   width: min(320px, 80vw);
+  height: 8px;
   accent-color: #38bdf8;
 }
 
