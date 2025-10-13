@@ -193,29 +193,29 @@ textarea:focus {
 .safe-dial-pointer {
   position: absolute;
   z-index: 5;
-  top: -22px;
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
   border-left: 14px solid transparent;
   border-right: 14px solid transparent;
-  border-bottom: 28px solid rgba(56, 189, 248, 0.82);
+  border-top: 28px solid rgba(56, 189, 248, 0.82);
   filter: drop-shadow(0 12px 18px rgba(56, 189, 248, 0.45));
 }
 
 .safe-dial-pointer::after {
   content: "";
   position: absolute;
-  top: 28px;
+  bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
   width: 24px;
   height: 12px;
-  border-radius: 0 0 12px 12px;
+  border-radius: 12px 12px 0 0;
   background: rgba(2, 6, 23, 0.95);
   border: 1px solid rgba(37, 99, 235, 0.35);
-  box-shadow: inset 0 -4px 6px rgba(15, 23, 42, 0.7);
+  box-shadow: inset 0 4px 6px rgba(15, 23, 42, 0.7);
 }
 
 .safe-dial-face {

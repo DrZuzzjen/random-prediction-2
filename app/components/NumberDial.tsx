@@ -43,7 +43,8 @@ function rotationToNumber(rotation: number) {
   const ticks = Math.round(normalised / ANGLE_PER_STEP);
   const wrapped = ((ticks % TOTAL_NUMBERS) + TOTAL_NUMBERS) % TOTAL_NUMBERS;
   const value = wrapped === 0 ? TOTAL_NUMBERS : wrapped;
-  return value;
+  // Ensure value is always between 1-99
+  return value <= 0 ? 1 : value;
 }
 
 function normaliseDelta(delta: number) {
@@ -85,7 +86,9 @@ export default function NumberDial({
   const dragRef = useRef<DragState>({ active: false, pointerId: null, previousAngle: 0 });
 
   const ticks = useMemo(() => Array.from({ length: TOTAL_NUMBERS }, (_, index) => index), []);
-  const majorMarks = useMemo(() => Array.from({ length: 10 }, (_, index) => index * 10), []);
+  // Display every 10th number: 10, 20, 30, 40, 50, 60, 70, 80, 90
+  // No "00" since range is 1-99
+  const majorMarks = useMemo(() => Array.from({ length: 9 }, (_, index) => (index + 1) * 10), []);
   const highlightMarkers = useMemo(() => {
     const unique = new Set<number>();
     highlightNumbers.forEach((value) => {
@@ -222,12 +225,13 @@ export default function NumberDial({
               );
             })}
             {majorMarks.map((mark) => {
-              const angle = mark * ANGLE_PER_STEP;
+              // Use numberToAngle for proper alignment with pointer
+              const angle = numberToAngle(mark);
               const style = {
                 "--number-angle": `${angle}deg`,
                 "--number-angle-invert": `${-angle}deg`
               } as CSSVarStyle;
-              const display = mark === 0 ? "00" : mark.toString().padStart(2, "0");
+              const display = mark.toString().padStart(2, "0");
               return (
                 <div key={`mark-${mark}`} className="safe-dial-number" style={style}>
                   <span>{display}</span>
@@ -240,7 +244,7 @@ export default function NumberDial({
             })}
           </div>
           <div className="safe-dial-center" style={{ transform: `translate(-50%, -50%) rotate(${-rotation}deg)` }}>
-            <span className="safe-dial-center-value">{currentNumber.toString().padStart(2, "0")}</span>
+            <span className="safe-dial-center-value">{(currentNumber || 1).toString().padStart(2, "0")}</span>
           </div>
           <div className="safe-dial-handle">
             <span className="safe-dial-notch" />
