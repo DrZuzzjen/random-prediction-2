@@ -42,7 +42,8 @@ function rotationToNumber(rotation: number) {
   const normalised = ((-rotation) % 360 + 360) % 360;
   const ticks = Math.round(normalised / ANGLE_PER_STEP);
   const wrapped = ((ticks % TOTAL_NUMBERS) + TOTAL_NUMBERS) % TOTAL_NUMBERS;
-  const value = wrapped === 0 ? TOTAL_NUMBERS : wrapped;
+  // Convert from 0-indexed (0-98) to 1-indexed (1-99)
+  const value = wrapped + 1;
   // Ensure value is always between 1-99
   return value <= 0 ? 1 : value;
 }
@@ -216,17 +217,21 @@ export default function NumberDial({
             {ticks.map((tick) => {
               const angle = tick * ANGLE_PER_STEP;
               const style = { "--tick-angle": `${angle}deg` } as CSSVarStyle;
+              // tick represents index 0-98, number is tick+1 (1-99)
+              // Major tick when the number (not index) is divisible by 5
+              const number = tick + 1;
+              const isMajor = number % 5 === 0;
               return (
                 <span
                   key={`tick-${tick}`}
-                  className={clsx("safe-dial-tick", { major: tick % 5 === 0 })}
+                  className={clsx("safe-dial-tick", { major: isMajor })}
                   style={style}
                 />
               );
             })}
             {majorMarks.map((mark) => {
-              // Use numberToAngle for proper alignment with pointer
-              const angle = numberToAngle(mark);
+              // Position at the tick index (mark-1 since numbers are 1-99 and ticks are 0-98)
+              const angle = (mark - 1) * ANGLE_PER_STEP;
               const style = {
                 "--number-angle": `${angle}deg`,
                 "--number-angle-invert": `${-angle}deg`
