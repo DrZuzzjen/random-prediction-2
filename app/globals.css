@@ -323,10 +323,11 @@ textarea:focus {
 }
 
 .safe-dial-center-value {
-  font-size: clamp(38px, 7vw, 56px);
+  font-size: clamp(48px, 9vw, 72px);
   font-weight: 800;
   color: #e0f2fe;
   letter-spacing: 0.06em;
+  line-height: 1;
 }
 
 .safe-dial-center-hint {
@@ -484,4 +485,67 @@ textarea:focus {
 
 .grid.four {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+/* Mobile Responsive Layout */
+.game-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+}
+
+@media (max-width: 1024px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Stack leaderboard below on mobile */
+  .game-layout > *:last-child {
+    order: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: 95vw;
+  }
+
+  .hero-title {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+  }
+
+  .card {
+    padding: 20px 16px;
+  }
+
+  /* Touch-friendly buttons */
+  button, .primary-button, .secondary-button {
+    min-height: 44px;
+    padding: 12px 20px;
+    font-size: 16px;
+  }
+
+  /* Better tag spacing */
+  .tag {
+    font-size: 0.8rem;
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
+  .card {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+
+  /* Single column grids on very small screens */
+  .grid.two, .grid.three, .grid.four {
+    grid-template-columns: 1fr;
+  }
 }

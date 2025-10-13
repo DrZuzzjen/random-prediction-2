@@ -241,10 +241,10 @@ export default function GamePage() {
         </header>
 
         <div
+          className="game-layout"
           style={{
             display: "grid",
             gap: "24px",
-            gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 340px)",
             alignItems: "start"
           }}
         >

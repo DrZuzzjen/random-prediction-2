@@ -40,16 +40,10 @@ function numberToAngle(value: number) {
 
 function rotationToNumber(rotation: number) {
   const normalised = ((-rotation) % 360 + 360) % 360;
-  const ticks = Math.round(normalised / ANGLE_PER_STEP) % TOTAL_NUMBERS;
-  const value = ticks + 1;
-  return value <= 0 ? value + TOTAL_NUMBERS : value;
-}
-
-function normaliseRotation(rotation: number) {
-  let result = rotation;
-  while (result > 0) result -= 360;
-  while (result <= -360) result += 360;
-  return Number.isFinite(result) ? result : 0;
+  const ticks = Math.round(normalised / ANGLE_PER_STEP);
+  const wrapped = ((ticks % TOTAL_NUMBERS) + TOTAL_NUMBERS) % TOTAL_NUMBERS;
+  const value = wrapped === 0 ? TOTAL_NUMBERS : wrapped;
+  return value;
 }
 
 function normaliseDelta(delta: number) {
@@ -103,10 +97,11 @@ export default function NumberDial({
   }, [highlightNumbers]);
 
   const applyRotation = (nextRotation: number) => {
-    const normalised = normaliseRotation(nextRotation);
-    rotationRef.current = normalised;
-    setRotation(normalised);
-    setCurrentNumber(rotationToNumber(normalised));
+    // Allow rotation to accumulate freely without normalization
+    // This prevents visual jumps when crossing the 99<->00 boundary
+    rotationRef.current = nextRotation;
+    setRotation(nextRotation);
+    setCurrentNumber(rotationToNumber(nextRotation));
   };
 
   const setNumber = (value: number) => {
@@ -245,9 +240,7 @@ export default function NumberDial({
             })}
           </div>
           <div className="safe-dial-center" style={{ transform: `translate(-50%, -50%) rotate(${-rotation}deg)` }}>
-            <span className="safe-dial-center-label">Your next number</span>
             <span className="safe-dial-center-value">{currentNumber.toString().padStart(2, "0")}</span>
-            <span className="safe-dial-center-hint">Rotate like an old safe, then lock it</span>
           </div>
           <div className="safe-dial-handle">
             <span className="safe-dial-notch" />
