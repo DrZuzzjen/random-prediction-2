@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
 
 type RequestBody = {
   count?: number;
@@ -7,6 +8,16 @@ type RequestBody = {
 };
 
 export async function POST(req: Request) {
+  // Require authentication - only logged in users can generate random numbers
+  try {
+    await requireAuth();
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Authentication required to generate random numbers" },
+      { status: 401 }
+    );
+  }
+
   const apiKey = process.env.RANDOM_API_KEY;
 
   if (!apiKey) {

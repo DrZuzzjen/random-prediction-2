@@ -6,6 +6,7 @@ import NumberDial from "@/app/components/NumberDial";
 import SelectedNumbers from "@/app/components/SelectedNumbers";
 import LeaderboardPanel from "@/app/components/LeaderboardPanel";
 import MigrationBanner from "@/app/components/MigrationBanner";
+import AuthRequiredModal from "@/app/components/AuthRequiredModal";
 import { useAuth } from "@/app/components/AuthProvider";
 import {
   calculateMatches,
@@ -47,6 +48,7 @@ export default function GamePage() {
   const [randomNumbers, setRandomNumbers] = useState<number[]>([]);
   const [score, setScore] = useState(0);
   const [newHighScore, setNewHighScore] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const loadLeaderboard = async () => {
@@ -112,6 +114,12 @@ export default function GamePage() {
       return;
     }
 
+    // Check if user is authenticated
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     setIsGenerating(true);
     setStatusMessage(null);
 
@@ -127,14 +135,15 @@ export default function GamePage() {
       }
 
       const payload = (await response.json()) as { numbers: number[] };
-      setRandomNumbers(payload.numbers);
       const computedScore = calculateScore(selectedNumbers, payload.numbers);
+
+      // Set state for display in results phase
+      setRandomNumbers(payload.numbers);
       setScore(computedScore);
-      setPhase("details");
-      setStatusMessage({
-        tone: "info",
-        text: "Numbers are ready! Save this run to your account to reveal the results.",
-      });
+      setIsGenerating(false);
+
+      // Since user is authenticated (checked earlier), automatically save the game
+      await persistGameRun(payload.numbers, computedScore);
     } catch (error) {
       console.error(error);
       setStatusMessage({
@@ -148,9 +157,13 @@ export default function GamePage() {
 
   
 
-  const persistGameRun = async () => {
+  const persistGameRun = async (numbersToUse?: number[], scoreToUse?: number) => {
   setIsSaving(true);
   setStatusMessage(null);
+
+  // Use provided parameters or fall back to state
+  const finalRandomNumbers = numbersToUse || randomNumbers;
+  const finalScore = scoreToUse !== undefined ? scoreToUse : score;
 
   try {
     const response = await fetch("/api/game-run", {
@@ -159,8 +172,8 @@ export default function GamePage() {
       body: JSON.stringify({
         name: user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player',
         predictions: selectedNumbers,
-        randomNumbers,
-        score
+        randomNumbers: finalRandomNumbers,
+        score: finalScore
       })
     });
 
@@ -208,6 +221,7 @@ export default function GamePage() {
 
   return (
     <main>
+      <AuthRequiredModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <section className="container" style={{ padding: "48px 0", display: "grid", gap: "28px" }}>
         <MigrationBanner />
         <header className="card" style={{ display: "grid", gap: "16px" }}>
@@ -303,7 +317,7 @@ export default function GamePage() {
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <button
                     className="primary-button"
-                    onClick={persistGameRun}
+                    onClick={() => persistGameRun()}
                     disabled={isSaving}
                   >
                     {isSaving ? "Saving to Supabase..." : "Reveal my results"}
