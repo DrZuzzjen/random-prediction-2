@@ -90,21 +90,6 @@ export default function RegisterForm({ onSubmit, isLoading, onLegacyDataDetected
         </div>
       )}
 
-      {legacyData?.hasLegacyData && (
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "12px",
-            border: "1px solid rgba(16, 185, 129, 0.5)",
-            background: "rgba(16, 185, 129, 0.1)",
-            color: "rgba(16, 185, 129, 0.9)",
-          }}
-        >
-          <strong>🎉 Welcome back!</strong> We found {legacyData.gameCount} previous game{legacyData.gameCount !== 1 ? 's' : ''} with this email.
-          They'll be automatically linked to your new account!
-        </div>
-      )}
-
       <label style={{ display: "grid", gap: 6 }}>
         <span>Name</span>
         <input
