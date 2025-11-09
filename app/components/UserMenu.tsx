@@ -87,7 +87,7 @@ export default function UserMenu() {
           </div>
 
           <a
-            href="/game"
+            href="/"
             style={{
               display: "block",
               padding: "8px 12px",

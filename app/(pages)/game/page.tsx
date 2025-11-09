@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import NumberDial from "@/app/components/NumberDial";
 import SelectedNumbers from "@/app/components/SelectedNumbers";
 import LeaderboardPanel from "@/app/components/LeaderboardPanel";
-import MigrationBanner from "@/app/components/MigrationBanner";
 import AuthRequiredModal from "@/app/components/AuthRequiredModal";
 import { useAuth } from "@/app/components/AuthProvider";
 import {
@@ -49,6 +48,23 @@ export default function GamePage() {
   const [score, setScore] = useState(0);
   const [newHighScore, setNewHighScore] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Restore selected numbers from localStorage on mount (after auth redirect)
+  useEffect(() => {
+    const savedNumbers = localStorage.getItem('pendingGameNumbers');
+    if (savedNumbers && user) {
+      try {
+        const numbers = JSON.parse(savedNumbers);
+        if (Array.isArray(numbers) && numbers.length === 10) {
+          setSelectedNumbers(numbers);
+          localStorage.removeItem('pendingGameNumbers'); // Clear after restoring
+          setStatusMessage({ tone: "success", text: "Welcome back! Your numbers are ready to play." });
+        }
+      } catch (e) {
+        console.error('Failed to restore numbers:', e);
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     const loadLeaderboard = async () => {
@@ -116,6 +132,8 @@ export default function GamePage() {
 
     // Check if user is authenticated
     if (!user) {
+      // Save selected numbers to localStorage before redirecting to auth
+      localStorage.setItem('pendingGameNumbers', JSON.stringify(selectedNumbers));
       setShowAuthModal(true);
       return;
     }
@@ -223,7 +241,6 @@ export default function GamePage() {
     <main>
       <AuthRequiredModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <section className="container" style={{ padding: "48px 0", display: "grid", gap: "28px" }}>
-        <MigrationBanner />
         <header className="card" style={{ display: "grid", gap: "16px" }}>
           <div className="phase-tag">🎯 Random Prediction Experience</div>
           <h1 className="hero-title">
@@ -293,8 +310,12 @@ export default function GamePage() {
                     className="primary-button"
                     onClick={generateRandomNumbers}
                     disabled={!hasCompleteSelection || isGenerating}
+                    style={hasCompleteSelection ? {
+                      background: "linear-gradient(135deg, #10b981, #059669)",
+                      boxShadow: "0 4px 16px rgba(16, 185, 129, 0.4)"
+                    } : undefined}
                   >
-                    {isGenerating ? "Contacting Random.org..." : "Generate True Random Numbers"}
+                    {isGenerating ? "Contacting Random.org..." : hasCompleteSelection ? "Play" : "Lock Number"}
                   </button>
                   <button className="secondary-button" onClick={resetGame} disabled={isGenerating}>
                     Reset picks

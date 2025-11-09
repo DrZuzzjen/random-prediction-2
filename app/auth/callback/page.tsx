@@ -69,7 +69,7 @@ export default function AuthCallbackPage() {
                     
                     // Redirect to game after showing success message
                     setTimeout(() => {
-                      window.location.href = "/game";
+                      window.location.href = "/";
                     }, 3000);
                     return;
                   } else if (migrateResponse.status === 401 && i < retries - 1) {
@@ -93,7 +93,7 @@ export default function AuthCallbackPage() {
         }
 
         // No legacy games or migration failed - go straight to game
-        window.location.href = "/game";
+        window.location.href = "/";
         
       } catch (error) {
         console.error("Callback handling failed:", error);
